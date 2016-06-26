@@ -43,6 +43,10 @@ public abstract class ContentHandler {
 		content = ContentHandler.appendNodeToNode(content, existingNode, appendedNode);
 	}
 	
+	protected void deleteLockNode(String nodeName, boolean deleteAllNodes) {
+		content = ContentHandler.deleteLockNode(content, nodeName, deleteAllNodes);
+	}
+	
 	protected void unlockNode(String nodeName, boolean unlockAllNodes) {
 		content = ContentHandler.unlockNode(content, nodeName, unlockAllNodes);
 	}
@@ -66,6 +70,27 @@ public abstract class ContentHandler {
 		return content.replaceAll(
 				existingNode, 
 				existingNode + "\n" + getWhitespace(content, existingNode) + appendedNode);
+	}
+	
+	protected static String deleteLockNode(String content, String nodeName, boolean unlockAllNodes) {
+		// For example:
+		// will change %JAVASCRIPT_TAG<script language="javascript" type="text/javascript">%
+		//          to <script language="javascript" type="text/javascript">
+		// to avoid deletion
+		
+		String nodePrefix = "%"+nodeName;
+		String nodeSuffix = "%";
+		
+		Pattern pattern = Pattern.compile(nodePrefix + ".*?" + nodeSuffix);
+		
+		Matcher matcher;
+		
+		while ((matcher = pattern.matcher(content)).find()) { // New matcher for each time b/c content changes
+			content = content.substring(0, matcher.start()) + 
+					content.substring(matcher.end());
+			if (!unlockAllNodes) return content;
+		}
+		return content;
 	}
 	
 	protected static String unlockNode(String content, String nodeName, boolean unlockAllNodes) {
