@@ -18,7 +18,7 @@ public class JQueryExtension extends Extension {
 		if (!nodeExists("JQUERY_EXT")) {
 			this.appendNodeToNode("METADATA", "JQUERY");
 			
-			this.replaceNode("RECAPTCHASCRIPT", jq);
+			this.replaceNode("JQUERY", jq);
 			
 			this.appendNodeToNode("METADATA", "JQUERY_EXT"); // Add existence notifier in case of duplicates
 		}
