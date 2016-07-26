@@ -1,9 +1,11 @@
-package com.quirkygaming.nodeframework.propertydb;
+package com.quirkygaming.nf2.propertydb;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -29,7 +31,28 @@ public class PropertyDBListener implements ServletContextListener {
 	
 	public static ErrorHandler<RuntimeException> pdb_handler = ErrorHandler.logAll(log, true);
 	
-	public static SubDB<RuntimeException> varcontent;
+	private static HashMap<String, SubDB<RuntimeException>> subDBs = new HashMap<>();
+	static {
+		subDBs.put("userContent", null);
+		subDBs.put("cache", null);
+		subDBs.put("internal", null);
+	}
+	
+	public static SubDB<RuntimeException> userContent() {return subDBs.get("userContent");}
+	public static SubDB<RuntimeException> cache() {return subDBs.get("cache");}
+	public static SubDB<RuntimeException> internal() {return subDBs.get("internal");}
+	public static SubDB<RuntimeException> DB(String name) {return subDBs.get(name);}
+	
+	public static void initSubDBs() {
+		for (String key : subDBs.keySet()) {
+			if (subDBs.get(key) == null) {
+				SubDB<RuntimeException> subDB = new SubDB<>("com_quirkygaming_custompuzzles_"+key, new File("/srv/tomcat/pdb/"), pdb_handler);
+				log.println("[" + new Date().toString() + 
+						"] Opened "+key+" subdb: " + subDB.getPropertyList().size() + " properties.");
+				subDBs.put(key, subDB);
+			}
+		}
+	}
 	
 	/**
 	 * Default constructor.
@@ -50,9 +73,8 @@ public class PropertyDBListener implements ServletContextListener {
 					"] Initializing PropertyDB with a period of " + PERIOD + " milliseconds.");
 			token = PropertyDB.initializeDB(PERIOD);
 		}
-		varcontent = new SubDB<>("varcontent", new File("/srv/tomcat/pdb/"), pdb_handler);
-		log.println("[" + new Date().toString() + 
-				"] Opened varcontent subdb: " + varcontent.getPropertyList().size() + " properties.");
+		
+		initSubDBs();
 	}
 
 	/**
@@ -67,5 +89,8 @@ public class PropertyDBListener implements ServletContextListener {
 	
 	public static String getLog() {
 		return logContent.toString();
+	}
+	public static Set<String> DBs() {
+		return subDBs.keySet();
 	}
 }
