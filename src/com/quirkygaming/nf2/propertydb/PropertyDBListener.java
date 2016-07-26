@@ -32,26 +32,45 @@ public class PropertyDBListener implements ServletContextListener {
 	public static ErrorHandler<RuntimeException> pdb_handler = ErrorHandler.logAll(log, true);
 	
 	private static HashMap<String, SubDB<RuntimeException>> subDBs = new HashMap<>();
-	static {
-		subDBs.put("userContent", null);
-		subDBs.put("cache", null);
-		subDBs.put("internal", null);
+	
+	//public static SubDB<RuntimeException> userContent() {return subDBs.get("userContent");}
+	public static SubDB<RuntimeException> cache() {return DB("cache", PropertyDBListener.class.getPackage());}
+	public static SubDB<RuntimeException> internal() {return DB("internal", PropertyDBListener.class.getPackage());}
+	public static SubDB<RuntimeException> DB(String name, Package owner) {return subDBs.get(dbname(name, owner));}
+	public static SubDB<RuntimeException> DB(String qualifiedName) {return subDBs.get(qualifiedName);}
+	
+	private static String dbname(String name, Package owner) {
+		return owner.getName().replaceAll("\\.", "_") + "_" + name;
 	}
 	
-	public static SubDB<RuntimeException> userContent() {return subDBs.get("userContent");}
-	public static SubDB<RuntimeException> cache() {return subDBs.get("cache");}
-	public static SubDB<RuntimeException> internal() {return subDBs.get("internal");}
-	public static SubDB<RuntimeException> DB(String name) {return subDBs.get(name);}
+	public static boolean reserveDB(String name, Package owner) {
+		name = dbname(name, owner);
+		if (!subDBs.containsKey(name)) {
+			subDBs.put(name, null);
+			return true;
+		}
+		return false;
+	}
 	
-	public static void initSubDBs() {
+	public static boolean registerDB(String name, Package owner) { // Reserve and initiate
+		boolean created = reserveDB(name, owner);
+		if (created) initReservedSubDBs();
+		return created;
+	}
+	
+	public static void initReservedSubDBs() {
 		for (String key : subDBs.keySet()) {
 			if (subDBs.get(key) == null) {
-				SubDB<RuntimeException> subDB = new SubDB<>("com_quirkygaming_custompuzzles_"+key, new File("/srv/tomcat/pdb/"), pdb_handler);
+				SubDB<RuntimeException> subDB = new SubDB<>(key, new File("/srv/tomcat/pdb/"), pdb_handler);
 				log.println("[" + new Date().toString() + 
 						"] Opened "+key+" subdb: " + subDB.getPropertyList().size() + " properties.");
 				subDBs.put(key, subDB);
 			}
 		}
+	}
+	
+	public static Set<String> qualifiedDBNames() {
+		return subDBs.keySet();
 	}
 	
 	/**
@@ -73,8 +92,9 @@ public class PropertyDBListener implements ServletContextListener {
 					"] Initializing PropertyDB with a period of " + PERIOD + " milliseconds.");
 			token = PropertyDB.initializeDB(PERIOD);
 		}
-		
-		initSubDBs();
+		reserveDB("cache", PropertyDBListener.class.getPackage());
+		reserveDB("internal", PropertyDBListener.class.getPackage());
+		initReservedSubDBs();
 	}
 
 	/**
@@ -84,13 +104,11 @@ public class PropertyDBListener implements ServletContextListener {
 		if (token != null) {
 			PropertyDB.closeDatabase(token);
 			log.println("[" + new Date().toString() + "] Closed PropertyDB");
+			subDBs.clear();
 		}
 	}
 	
 	public static String getLog() {
 		return logContent.toString();
-	}
-	public static Set<String> DBs() {
-		return subDBs.keySet();
 	}
 }
