@@ -15,8 +15,6 @@ import com.quirkygaming.nf2.extensions.SingleInstanceExtension;
 
 public abstract class WebPage extends ContentHandler {
 	
-	private String rawContent;
-	
 	protected HttpServlet servlet;
 	
 	protected boolean SHOW_REMAINING_NODES;
@@ -30,9 +28,6 @@ public abstract class WebPage extends ContentHandler {
 	public WebPage(HttpServlet servlet, boolean showRemainingNodes) {
 		this.servlet = servlet;
 		this.SHOW_REMAINING_NODES = showRemainingNodes;
-		
-		rawContent = baseContent();
-		if (rawContent == null) throw new RuntimeException("Null content");
 	}
 	
 	public abstract String getID(); // The page should have a recognizable ID for debugging, like a title.
@@ -67,7 +62,8 @@ public abstract class WebPage extends ContentHandler {
 	public String getHtml() {
 		// Perform all operations, remove remaining nodes, return
 		
-		content = rawContent;
+		content = baseContent();
+		if (content == null) throw new RuntimeException("Null base content");;
 		
 		preExtensionProcessing();
 		
