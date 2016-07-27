@@ -25,8 +25,6 @@ public class DefaultServlet {
 	 */
 	public static boolean forwardDefaultContent(HttpServlet host, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		if (request.getRequestURI().contains("/public/")) {
-			System.out.println(request.getRequestURI());
-			
 			RequestDispatcher rd = host.getServletContext().getNamedDispatcher("default");
 			
 			HttpServletRequest wrapped = new HttpServletRequestWrapper(request) {
