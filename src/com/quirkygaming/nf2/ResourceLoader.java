@@ -30,7 +30,7 @@ public class ResourceLoader {
 				return (String) PropertyDBListener.internal().getLoadedProperty(sanitizedName).get();
 			} else {
 				// Load then unload; not being used elsewhere
-				return PropertyDBListener.internal().getAndCloseLoadedProperty(sanitizedName, 1, initialValue);
+				return PropertyDBListener.internal().getAndCloseProperty(sanitizedName, 1, initialValue);
 			}
 		} else {
 			// Public
